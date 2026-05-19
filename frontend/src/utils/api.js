@@ -9,9 +9,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api",  // Proxied to http://localhost:5000/api by Vite
+  baseURL: import.meta.env.VITE_API_URL || "/api", // Proxied to http://localhost:5000/api by Vite
   headers: { "Content-Type": "application/json" },
-  timeout: 15000,  // 15 second timeout
+  timeout: 15000, // 15 second timeout
 });
 
 // ── Request Interceptor ────────────────────────────────────────
@@ -24,7 +24,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // ── Response Interceptor ───────────────────────────────────────
@@ -39,7 +39,7 @@ api.interceptors.response.use(
       window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
