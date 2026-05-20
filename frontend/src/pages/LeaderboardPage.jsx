@@ -8,7 +8,9 @@
  * - Admin: team analytics section
  */
 
+
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -17,6 +19,16 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 
 export default function LeaderboardPage() {
   const { isAdmin, user }         = useAuth();
+  const navigate                  = useNavigate();
+
+  // Redirect non-admin users away
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate("/dashboard");
+    }
+  }, [isAdmin]);
+
+  if (!isAdmin) return null;
   const [leaderboard, setLeaderboard] = useState([]);
   const [analytics, setAnalytics]     = useState(null);
   const [metric, setMetric]           = useState("accuracy");

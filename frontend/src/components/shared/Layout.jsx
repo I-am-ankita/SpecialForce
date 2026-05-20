@@ -16,7 +16,6 @@ import {
 const navItems = [
   { to: "/dashboard",   icon: LayoutDashboard, label: "Dashboard" },
   { to: "/quiz",        icon: Brain,            label: "Quiz" },
-  { to: "/leaderboard", icon: Trophy,           label: "Leaderboard" },
   { to: "/notes",       icon: BookOpen,         label: "Notes" },
   { to: "/practice",    icon: Dumbbell,         label: "Practice" },
 ];
@@ -121,9 +120,41 @@ export default function Layout() {
               {sidebarOpen && label}
             </NavLink>
           ))}
+            
+
+         {/* Leaderboard — admin only */}
+{isAdmin && (
+  <NavLink
+    to="/leaderboard"
+    style={({ isActive }) => ({
+      display: "flex",
+      alignItems: "center",
+      gap: "0.75rem",
+      padding: "0.65rem 0.75rem",
+      borderRadius: "var(--radius-md)",
+      color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+      background: isActive ? "var(--accent-dim)" : "transparent",
+      borderLeft: isActive ? "2px solid var(--accent)" : "2px solid transparent",
+      fontWeight: isActive ? 600 : 400,
+      fontSize: "0.9rem",
+      marginBottom: "2px",
+      transition: "all var(--transition)",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textDecoration: "none",
+    })}
+  >
+    <Trophy size={18} style={{ flexShrink: 0 }} />
+    {sidebarOpen && "Leaderboard"}
+  </NavLink>
+)}
+
+
+
 
           {/* Admin link */}
           {isAdmin && (
+
             <NavLink
               to="/admin"
               style={({ isActive }) => ({
