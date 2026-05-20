@@ -123,20 +123,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Demo credentials hint */}
-        <div
-          style={{
-            marginTop: "1.5rem",
-            padding: "0.75rem",
-            background: "var(--bg-elevated)",
-            borderRadius: "var(--radius-md)",
-            fontSize: "0.8rem",
-            color: "var(--text-secondary)",
-          }}
-        >
-          <strong style={{ color: "var(--warning)" }}>Demo:</strong>{" "}
-          admin@aptitude.com / Admin@123
-        </div>
+       
 
         <p
           style={{

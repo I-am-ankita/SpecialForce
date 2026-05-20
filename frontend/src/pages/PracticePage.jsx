@@ -695,33 +695,272 @@ function SpeedMathDrill({ config, onBack, color }) {
 }
 
 function FractionsDrill({ config, onBack, color }) {
-  const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
   const [questions] = useState(() => {
-    const maxNum =
-      config.difficulty === "easy"
-        ? 10
-        : config.difficulty === "medium"
-          ? 20
-          : 50;
-    return Array.from({ length: config.count }, (_, i) => {
-      const num = Math.floor(Math.random() * maxNum) + 2;
-      const den = Math.floor(Math.random() * maxNum) + 2;
-      const g = gcd(num, den);
-      const simplified = `${num / g}/${den / g}`;
-      return {
-        id: i,
-        question: `Simplify: ${num}/${den} (enter numerator only)`,
-        answer: num / g,
-        fullAnswer: simplified,
-      };
-    });
+    // Common fractions mapped to their percentage values
+    const allFractions = [
+      // Easy ones
+      { q: "1/2",   a: 50   },
+      { q: "1/4",   a: 25   },
+      { q: "3/4",   a: 75   },
+      { q: "1/5",   a: 20   },
+      { q: "2/5",   a: 40   },
+      { q: "3/5",   a: 60   },
+      { q: "4/5",   a: 80   },
+      { q: "1/10",  a: 10   },
+      { q: "3/10",  a: 30   },
+      { q: "7/10",  a: 70   },
+      { q: "9/10",  a: 90   },
+      { q: "1/3",   a: 33.33 },
+      { q: "2/3",   a: 66.67 },
+      // Medium ones
+      { q: "1/6",   a: 16.67 },
+      { q: "5/6",   a: 83.33 },
+      { q: "1/8",   a: 12.5  },
+      { q: "3/8",   a: 37.5  },
+      { q: "5/8",   a: 62.5  },
+      { q: "7/8",   a: 87.5  },
+      { q: "1/7",   a: 14.29 },
+      { q: "2/7",   a: 28.57 },
+      { q: "3/7",   a: 42.86 },
+      { q: "1/9",   a: 11.11 },
+      { q: "2/9",   a: 22.22 },
+      { q: "4/9",   a: 44.44 },
+      // Hard ones
+      { q: "1/11",  a: 9.09  },
+      { q: "1/12",  a: 8.33  },
+      { q: "5/12",  a: 41.67 },
+      { q: "7/12",  a: 58.33 },
+      { q: "11/12", a: 91.67 },
+      { q: "1/15",  a: 6.67  },
+      { q: "2/15",  a: 13.33 },
+      { q: "1/20",  a: 5     },
+      { q: "3/20",  a: 15    },
+      { q: "7/20",  a: 35    },
+    ];
+
+    // Filter by difficulty
+    const pool = config.difficulty === "easy"
+      ? allFractions.slice(0, 13)
+      : config.difficulty === "medium"
+      ? allFractions.slice(0, 25)
+      : allFractions;
+
+    // Shuffle and pick required count
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, config.count);
+
+    return selected.map((f, i) => ({
+      id: i,
+      question: `${f.q} = ?%`,
+      answer: f.a,
+      displayAnswer: `${f.a}%`,
+    }));
   });
+
+  // Custom drill engine for fractions
+  // accepts decimal answers like 33.33
+  const [current, setCurrent]     = useState(0);
+  const [input, setInput]         = useState("");
+  const [results, setResults]     = useState([]);
+  const [done, setDone]           = useState(false);
+  const [startTime]               = useState(Date.now());
+  const [elapsed, setElapsed]     = useState(0);
+  const [feedback, setFeedback]   = useState(null);
+  const inputRef                  = useRef(null);
+  const timerRef                  = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    timerRef.current = setInterval(
+      () => setElapsed(Math.round((Date.now() - startTime) / 1000)),
+      1000
+    );
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!done) inputRef.current?.focus();
+  }, [current]);
+
+  const handleSubmit = () => {
+    if (!input.trim()) return;
+    const q = questions[current];
+    const userVal = parseFloat(input.trim());
+    // Allow small rounding difference e.g. 33.33 vs 33.34
+    const isCorrect = Math.abs(userVal - q.answer) < 0.1;
+
+    setFeedback(isCorrect ? "correct" : "wrong");
+    setResults((prev) => [...prev, { ...q, userAnswer: input, isCorrect }]);
+
+    setTimeout(() => {
+      setFeedback(null);
+      setInput("");
+      if (current + 1 >= questions.length) {
+        clearInterval(timerRef.current);
+        setDone(true);
+      } else {
+        setCurrent((c) => c + 1);
+      }
+    }, 500);
+  };
+
+  const handleKey = (e) => { if (e.key === "Enter") handleSubmit(); };
+
+  if (done) {
+    const correct  = results.filter(r => r.isCorrect).length;
+    const accuracy = Math.round((correct / results.length) * 100);
+    return (
+      <div className="page-container animate-fade" style={{ maxWidth: "560px" }}>
+        <div className="card" style={{ textAlign: "center", borderColor: `${color}40`, marginBottom: "1.5rem" }}>
+          <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>
+            {accuracy >= 80 ? "🎉" : accuracy >= 60 ? "👍" : "💪"}
+          </div>
+          <h2 style={{ color }}>{accuracy}% Accuracy</h2>
+          <div style={{ display: "flex", justifyContent: "center", gap: "2rem", marginTop: "1rem" }}>
+            <div>
+              <div className="stat-value" style={{ color: "var(--success)" }}>{correct}</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Correct</div>
+            </div>
+            <div>
+              <div className="stat-value" style={{ color: "var(--danger)" }}>{results.length - correct}</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Wrong</div>
+            </div>
+            <div>
+              <div className="stat-value">{elapsed}s</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Time</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card" style={{ marginBottom: "1rem" }}>
+          <h3 style={{ marginBottom: "0.75rem" }}>Review</h3>
+          <div style={{ maxHeight: "300px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
+            {results.map((r, i) => (
+              <div key={i} style={{
+                display: "flex", justifyContent: "space-between",
+                padding: "0.5rem 0.75rem", borderRadius: "var(--radius-sm)",
+                background: r.isCorrect ? "var(--success-dim)" : "var(--danger-dim)",
+                fontSize: "0.85rem",
+              }}>
+                <span style={{ color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+                  {r.question}
+                </span>
+                <span style={{
+                  fontFamily: "var(--font-mono)", fontWeight: 600,
+                  color: r.isCorrect ? "var(--success)" : "var(--danger)",
+                }}>
+                  {r.isCorrect
+                    ? `✓ ${r.displayAnswer}`
+                    : `✗ ${r.displayAnswer} (yours: ${r.userAnswer}%)`
+                  }
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <button className="btn btn-primary" onClick={() => window.location.reload()}
+            style={{ flex: 1, justifyContent: "center", background: color }}>
+            Try Again
+          </button>
+          <button className="btn btn-ghost" onClick={onBack}
+            style={{ flex: 1, justifyContent: "center" }}>
+            ← Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const q        = questions[current];
+  const progress = Math.round((current / questions.length) * 100);
+
   return (
-    <DrillEngine
-      questions={questions}
-      onBack={onBack}
-      color={color}
-      title="Fractions"
-    />
+    <div style={{ maxWidth: "540px", margin: "0 auto", padding: "2rem 1.5rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+        <button className="btn btn-ghost" onClick={onBack} style={{ padding: "0.4rem 0.8rem", fontSize: "0.82rem" }}>
+          ← Back
+        </button>
+        <div style={{ fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+          ⏱ {elapsed}s
+        </div>
+        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          {current + 1} / {questions.length}
+        </div>
+      </div>
+
+      <div className="progress-bar" style={{ marginBottom: "2rem" }}>
+        <div className="progress-fill" style={{ width: `${progress}%`, background: color }} />
+      </div>
+
+      {/* Hint bar */}
+      <div style={{
+        background: "var(--bg-elevated)",
+        borderRadius: "var(--radius-md)",
+        padding: "0.5rem 1rem",
+        marginBottom: "1rem",
+        fontSize: "0.78rem",
+        color: "var(--text-muted)",
+        textAlign: "center",
+      }}>
+        💡 Type the percentage value — e.g. for 1/4 type <strong style={{ color: "var(--warning)" }}>25</strong>
+        &nbsp;(for repeating decimals like 1/3 type <strong style={{ color: "var(--warning)" }}>33.33</strong>)
+      </div>
+
+      <div className="card" style={{
+        textAlign: "center",
+        borderColor: feedback === "correct" ? "var(--success)"
+          : feedback === "wrong" ? "var(--danger)"
+          : `${color}40`,
+        transition: "border-color 0.2s",
+        marginBottom: "1.5rem",
+        padding: "2.5rem",
+      }}>
+        {feedback && (
+          <div style={{ marginBottom: "1rem" }}>
+            {feedback === "correct"
+              ? <span style={{ fontSize: "2rem" }}>✅</span>
+              : <span style={{ fontSize: "2rem" }}>❌</span>
+            }
+          </div>
+        )}
+        <p style={{ fontSize: "2rem", fontFamily: "var(--font-mono)", fontWeight: 600, marginBottom: "0.5rem" }}>
+          {q.question}
+        </p>
+        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "1.5rem" }}>
+          Convert this fraction to percentage
+        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+          <input
+            ref={inputRef}
+            type="number"
+            step="0.01"
+            className="input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Enter %"
+            style={{
+              textAlign: "center", fontSize: "1.3rem",
+              fontFamily: "var(--font-mono)", maxWidth: "160px",
+            }}
+            autoComplete="off"
+          />
+          <span style={{ fontSize: "1.5rem", color: "var(--text-muted)" }}>%</span>
+        </div>
+      </div>
+
+      <button className="btn btn-primary" onClick={handleSubmit} style={{
+        width: "100%", justifyContent: "center",
+        padding: "0.85rem", background: color,
+      }}>
+        Submit Answer →
+      </button>
+      <p style={{ textAlign: "center", fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "0.75rem" }}>
+        Press Enter to submit quickly
+      </p>
+    </div>
   );
 }
+
