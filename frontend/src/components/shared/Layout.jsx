@@ -25,7 +25,6 @@ import {
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/quiz", icon: Brain, label: "Quiz" },
-  { to: "/history", icon: History, label: "History" },
   { to: "/notes", icon: BookOpen, label: "Notes" },
   { to: "/practice", icon: Dumbbell, label: "Practice" },
 ];
