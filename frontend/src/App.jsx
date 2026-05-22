@@ -28,6 +28,7 @@ import QuizPage from "./pages/QuizPage";
 import ResultPage from "./pages/ResultPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotesPage from "./pages/NotesPage";
+import HistoryPage from "./pages/HistoryPage";
 import PracticePage from "./pages/PracticePage";
 import AdminPage from "./pages/AdminPage";
 import Layout from "./components/shared/Layout";
@@ -90,6 +91,7 @@ function AppRoutes() {
         <Route path="result/:id" element={<ResultPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="notes" element={<NotesPage />} />
+        <Route path="history" element={<HistoryPage />} />
         <Route path="practice" element={<PracticePage />} />
         <Route
           path="admin"
